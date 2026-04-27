@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — AllForFun</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary:  #1a237e;
+            --secondary:#0d47a1;
+            --accent:   #ff6f00;
+            --dark:     #1a1a2e;
+            --success:  #2e7d32;
+            --danger:   #c62828;
+            --warning:  #f57f17;
+            --bg:       #f0f4ff;
+            --card:     #ffffff;
+            --border:   #e0e4f0;
+            --text:     #222;
+            --muted:    #666;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* ===== LOGIN ===== */
+        #loginScreen {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+        }
+        .login-box {
+            background: white; border-radius: 20px; padding: 40px 35px;
+            width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .login-box .logo { font-size: 26px; font-weight: 800; margin-bottom: 6px; }
+        .login-box .logo span { color: var(--accent); }
+        .login-box .logo i { color: var(--accent); margin-right: 8px; }
+        .login-box p { color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+        .login-box input {
+            width: 100%; padding: 13px 16px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 15px; margin-bottom: 14px; outline: none;
+            transition: border-color 0.3s;
+        }
+        .login-box input:focus { border-color: var(--primary); }
+        .btn-login {
+            width: 100%; padding: 14px; background: var(--primary); color: white;
+            border: none; border-radius: 10px; font-size: 16px; font-weight: 700;
+            cursor: pointer; transition: background 0.3s;
+        }
+        .btn-login:hover { background: var(--secondary); }
+        .login-error { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
+
+        /* ===== DASHBOARD ===== */
+        #dashboard { display: none; }
+
+        /* Header admin */
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white; padding: 14px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .admin-header .brand { font-size: 18px; font-weight: 800; }
+        .admin-header .brand span { color: var(--accent); }
+        .admin-header .header-right { display: flex; align-items: center; gap: 16px; }
+        .admin-badge { background: rgba(255,255,255,0.15); padding: 5px 14px; border-radius: 50px; font-size: 13px; }
+        .btn-logout {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 7px 16px; border-radius: 50px; font-size: 13px;
+            cursor: pointer; font-weight: 600; transition: all 0.3s;
+        }
+        .btn-logout:hover { background: rgba(255,255,255,0.25); }
+
+        /* Stats bar */
+        .stats-bar {
+            display: flex; gap: 14px; padding: 20px 24px; flex-wrap: wrap;
+            background: white; border-bottom: 1px solid var(--border);
+        }
+        .stat-card {
+            flex: 1; min-width: 130px; background: var(--bg);
+            border-radius: 12px; padding: 14px 18px; display: flex;
+            align-items: center; gap: 12px;
+        }
+        .stat-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; color: white; }
+        .stat-icon.orange { background: var(--warning); }
+        .stat-icon.green  { background: var(--success); }
+        .stat-icon.blue   { background: var(--primary); }
+        .stat-icon.red    { background: var(--danger); }
+        .stat-info .val { font-size: 22px; font-weight: 800; color: var(--text); }
+        .stat-info .lbl { font-size: 12px; color: var(--muted); }
+
+        /* Tabs */
+        .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); padding: 0 24px; }
+        .tab-btn {
+            padding: 14px 20px; border: none; background: none; cursor: pointer;
+            font-size: 14px; font-weight: 600; color: var(--muted);
+            border-bottom: 3px solid transparent; transition: all 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .tab-btn:hover { color: var(--primary); }
+
+        /* Main content */
+        .content { padding: 24px; max-width: 1100px; margin: 0 auto; }
+
+        /* Filters */
+        .filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+        .filter-btn {
+            padding: 8px 18px; border-radius: 50px; border: 2px solid var(--border);
+            background: white; cursor: pointer; font-size: 13px; font-weight: 600;
+            color: var(--muted); transition: all 0.3s;
+        }
+        .filter-btn.active, .filter-btn:hover { border-color: var(--primary); color: var(--primary); background: #e8eaf6; }
+        .search-box {
+            flex: 1; min-width: 200px; padding: 9px 16px;
+            border: 2px solid var(--border); border-radius: 50px;
+            font-size: 13px; outline: none; transition: border-color 0.3s;
+        }
+        .search-box:focus { border-color: var(--primary); }
+
+        /* Table */
+        .table-wrap { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: var(--primary); color: white; }
+        th { padding: 13px 14px; text-align: left; font-weight: 700; white-space: nowrap; }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #f8f9ff; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 50px; font-size: 12px; font-weight: 700;
+        }
+        .badge-pending { background: #fff8e1; color: var(--warning); border: 1px solid #ffe082; }
+        .badge-paid    { background: #e8f5e9; color: var(--success); border: 1px solid #a5d6a7; }
+        .badge-cancel  { background: #ffebee; color: var(--danger);  border: 1px solid #ef9a9a; }
+
+        .code-chip {
+            font-family: 'Courier New', monospace; background: #e8eaf6;
+            color: var(--primary); padding: 3px 10px; border-radius: 6px;
+            font-weight: 700; font-size: 13px;
+        }
+
+        .btn-sm {
+            padding: 7px 14px; border-radius: 8px; border: none; cursor: pointer;
+            font-size: 12px; font-weight: 700; transition: all 0.3s; display: inline-flex;
+            align-items: center; gap: 5px;
+        }
+        .btn-confirm { background: var(--success); color: white; }
+        .btn-confirm:hover { background: #1b5e20; }
+        .btn-cancel  { background: var(--danger);  color: white; }
+        .btn-cancel:hover  { background: #7f0000; }
+        .btn-view    { background: var(--primary); color: white; }
+        .btn-view:hover    { background: var(--secondary); }
+
+        /* Codes tab */
+        .codes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .code-tile {
+            background: white; border-radius: 10px; padding: 12px;
+            text-align: center; border: 2px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .code-tile.used { background: #f5f5f5; border-color: #ddd; opacity: 0.65; }
+        .code-tile .code-str { font-family: 'Courier New', monospace; font-size: 15px; font-weight: 800; color: var(--primary); }
+        .code-tile.used .code-str { color: var(--muted); }
+        .code-tile .code-status { font-size: 11px; margin-top: 5px; font-weight: 600; }
+        .code-tile .code-status.free { color: var(--success); }
+        .code-tile .code-status.used { color: var(--muted); }
+        .code-tile .code-resa { font-size: 10px; color: var(--muted); margin-top: 3px; word-break: break-all; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            display: none; align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 20px; padding: 30px;
+            width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: fadeUp 0.3s ease;
+        }
+        @keyframes fadeUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal h3 { color: var(--primary); margin-bottom: 6px; font-size: 18px; }
+        .modal .modal-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+        .modal label { display: block; font-size: 13px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+        .modal select {
+            width: 100%; padding: 12px 14px; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 14px; font-family: 'Courier New', monospace;
+            font-weight: 700; outline: none; color: var(--primary); transition: border-color 0.3s;
+        }
+        .modal select:focus { border-color: var(--primary); }
+        .modal-actions { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-modal-confirm { flex: 1; padding: 12px; background: var(--success); color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .btn-modal-cancel  { flex: 1; padding: 12px; background: #eee; color: var(--text); border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; min-width: 240px;
+            background: var(--success); color: white; padding: 14px 18px;
+            border-radius: 12px; font-size: 14px; font-weight: 600;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2); z-index: 300;
+            display: none; align-items: center; gap: 10px;
+        }
+        .toast.show { display: flex; animation: toastIn 0.3s ease; }
+        .toast.error { background: var(--danger); }
+        @keyframes toastIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed; inset: 0; background: rgba(255,255,255,0.7);
+            display: none; align-items: center; justify-content: center; z-index: 150;
+        }
+        .loading-overlay.show { display: flex; }
+        .spinner-big { width: 50px; height: 50px; border: 5px solid #e0e0e0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .stats-bar { gap: 10px; padding: 14px; }
+            .content { padding: 14px; }
+            th:nth-child(3), td:nth-child(3),
+            th:nth-child(5), td:nth-child(5) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="logo"><i class="fas fa-landmark"></i><span>AllFor</span>Fun</div>
+        <p>Espace Administrateur</p>
+        <input type="email" id="adminEmail" placeholder="Email administrateur" autocomplete="username">
+        <input type="password" id="adminPassword" placeholder="Mot de passe" autocomplete="current-password">
+        <button class="btn-login" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i> Connexion
+        </button>
+        <p class="login-error" id="loginError"><i class="fas fa-exclamation-circle"></i> <span id="loginErrorMsg"></span></p>
+    </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="dashboard">
+    <div class="admin-header">
+        <div class="brand"><i class="fas fa-landmark" style="color:var(--accent)"></i> <span>AllFor</span>Fun — Admin</div>
+        <div class="header-right">
+            <span class="admin-badge" id="adminEmailDisplay"></span>
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Déconnexion</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-info"><div class="val" id="statPending">—</div><div class="lbl">En attente</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-info"><div class="val" id="statPaid">—</div><div class="lbl">Payés</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fas fa-key"></i></div>
+            <div class="stat-info"><div class="val" id="statCodesLeft">—</div><div class="lbl">Codes libres</div></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="fas fa-ban"></i></div>
+            <div class="stat-info"><div class="val" id="statCancelled">—</div><div class="lbl">Annulés</div></div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-btn active" id="tabResaBtn" onclick="switchTab('reservations')">
+            <i class="fas fa-list"></i> Réservations
+        </button>
+        <button class="tab-btn" id="tabCodesBtn" onclick="switchTab('codes')">
+            <i class="fas fa-key"></i> Codes de confirmation
+        </button>
+    </div>
+
+    <!-- ===== ONGLET RÉSERVATIONS ===== -->
+    <div id="tabReservations" class="content">
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterReservations('tous', this)">Tous</button>
+            <button class="filter-btn" onclick="filterReservations('en_attente', this)">En attente</button>
+            <button class="filter-btn" onclick="filterReservations('paye', this)">Payés</button>
+            <button class="filter-btn" onclick="filterReservations('annule', this)">Annulés</button>
+            <input class="search-box" id="searchInput" type="text" placeholder="🔍 Rechercher (nom, code, téléphone...)">
+            <button class="filter-btn" onclick="loadReservations()" title="Actualiser"><i class="fas fa-rotate-right"></i> Actualiser</button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Code Réservation</th>
+                        <th>Nom & Prénoms</th>
+                        <th>Date visite</th>
+                        <th>Téléphone</th>
+                        <th>Montant</th>
+                        <th>Statut</th>
+                        <th>Code Confirm.</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="resaTableBody">
+                    <tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Chargement...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ===== ONGLET CODES ===== -->
+    <div id="tabCodes" class="content" style="display:none">
+        <div class="filters">
+            <button class="filter-btn active" onclick="filterCodes('tous', this)">Tous les codes</button>
+            <button class="filter-btn" onclick="filterCodes('libre', this)">Libres</button>
+            <button class="filter-btn" onclick="filterCodes('utilise', this)">Utilisés</button>
+        </div>
+        <div class="codes-grid" id="codesGrid">
+            <div style="text-align:center;padding:20px;color:var(--muted);grid-column:1/-1">Chargement...</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL CONFIRMATION PAIEMENT ===== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h3><i class="fas fa-check-circle" style="color:var(--success)"></i> Confirmer le paiement</h3>
+        <p class="modal-sub" id="modalSubtitle">—</p>
+
+        <label>Attribuer un code de confirmation</label>
+        <select id="codeSelect">
+            <option value="">— Sélectionnez un code libre —</option>
+        </select>
+
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeModal()"><i class="fas fa-times"></i> Annuler</button>
+            <button class="btn-modal-confirm" id="modalConfirmBtn"><i class="fas fa-check"></i> Confirmer & Attribuer</button>
+        </div>
+    </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fas fa-check-circle"></i><span id="toastMsg"></span></div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner-big"></div></div>
+
+<!-- ===== SUPABASE ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    /* ================================================================
+       CONFIGURATION — Remplacez par vos vraies valeurs
+    ================================================================ */
+    const SUPABASE_URL  = 'https://wqfzqvavormqufchctfp.supabase.co';   
+    const SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndxZnpxdmF2b3JtcXVmY2hjdGZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NjQ2NTUsImV4cCI6MjA5MjU0MDY1NX0.q0e9FodfMCBmtXdJOunU0wYRbrqlED6eqA9yG-d3fhk';                     
+
+    const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    /* ================================================================
+       ÉTAT GLOBAL
+    ================================================================ */
+    var allReservations = [];
+    var allCodes        = [];
+    var currentFilter   = 'tous';
+    var currentResaId   = null;  /* Réservation en cours de traitement dans la modal */
+    var currentResaCode = null;
+
+    /* ================================================================
+       AUTHENTIFICATION
+    ================================================================ */
+    document.getElementById('loginBtn').addEventListener('click', async function () {
+        var email = document.getElementById('adminEmail').value.trim();
+        var pass  = document.getElementById('adminPassword').value;
+        var errEl = document.getElementById('loginError');
+        var errMsg = document.getElementById('loginErrorMsg');
+
+        if (!email || !pass) {
+            errMsg.textContent = 'Veuillez remplir tous les champs.';
+            errEl.style.display = 'block';
+            return;
+        }
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-inline">Connexion...</span>';
+
+        const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pass });
+
+        if (error) {
+            errMsg.textContent = 'Email ou mot de passe incorrect.';
+            errEl.style.display = 'block';
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-sign-in-alt"></i> Connexion';
+            return;
+        }
+        showDashboard(data.user.email);
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async function () {
+        await sbClient.auth.signOut();
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+    });
+
+    /* Vérifier si déjà connecté */
+    sbClient.auth.getSession().then(({ data }) => {
+        if (data.session) showDashboard(data.session.user.email);
+    });
+
+    function showDashboard(email) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').style.display   = 'block';
+        document.getElementById('adminEmailDisplay').textContent = email;
+        loadData();
+    }
+
+    /* ================================================================
+       CHARGEMENT DES DONNÉES
+    ================================================================ */
+    async function loadData() {
+        showLoader();
+        await Promise.all([loadReservations(), loadCodes()]);
+        updateStats();
+        hideLoader();
+    }
+
+    async function loadReservations() {
+        const { data, error } = await sbClient
+            .from('reservations')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) { showToast('Erreur chargement réservations', true); return; }
+        allReservations = data || [];
+        renderReservations(allReservations);
+    }
+
+    async function loadCodes() {
+        const { data, error } = await sbClient
+            .from('confirmation_codes')
+            .select('*')
+            .order('id');
+
+        if (error) { showToast('Erreur chargement codes', true); return; }
+        allCodes = data || [];
+        renderCodes(allCodes);
+    }
+
+    function updateStats() {
+        document.getElementById('statPending').textContent   = allReservations.filter(r => r.statut === 'en_attente').length;
+        document.getElementById('statPaid').textContent      = allReservations.filter(r => r.statut === 'paye').length;
+        document.getElementById('statCancelled').textContent = allReservations.filter(r => r.statut === 'annule').length;
+        document.getElementById('statCodesLeft').textContent = allCodes.filter(c => !c.is_used).length;
+    }
+
+    /* ================================================================
+       RENDU TABLE RÉSERVATIONS
+    ================================================================ */
+    function renderReservations(data) {
+        var tbody = document.getElementById('resaTableBody');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--muted)">Aucune réservation trouvée.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.map(function (r) {
+            var badge = r.statut === 'paye'
+                ? '<span class="badge badge-paid"><i class="fas fa-check"></i> Payé</span>'
+                : r.statut === 'annule'
+                ? '<span class="badge badge-cancel"><i class="fas fa-times"></i> Annulé</span>'
+                : '<span class="badge badge-pending"><i class="fas fa-clock"></i> En attente</span>';
+
+            var codeCell = r.confirmation_code
+                ? '<span class="code-chip">' + r.confirmation_code + '</span>'
+                : '<span style="color:var(--muted);font-size:12px">—</span>';
+
+            var actions = '';
+            if (r.statut === 'en_attente') {
+                actions = '<button class="btn-sm btn-confirm" onclick="openConfirmModal(\'' + r.id + '\',\'' + r.code_reservation + '\',\'' + r.nom + ' ' + r.prenoms + '\')">'
+                        + '<i class="fas fa-check"></i> Confirmer</button> '
+                        + '<button class="btn-sm btn-cancel" onclick="cancelReservation(\'' + r.id + '\')">'
+                        + '<i class="fas fa-times"></i></button>';
+            } else if (r.statut === 'paye') {
+                actions = '<span style="color:var(--success);font-size:12px;font-weight:700"><i class="fas fa-check-double"></i> Traité</span>';
+            } else {
+                actions = '<span style="color:var(--muted);font-size:12px">—</span>';
+            }
+
+            return '<tr>'
+                + '<td><span class="code-chip">' + r.code_reservation + '</span></td>'
+                + '<td><strong>' + r.nom + '</strong> ' + r.prenoms + '</td>'
+                + '<td>' + formatDate(r.date_visite) + '</td>'
+                + '<td>' + r.telephone + '</td>'
+                + '<td style="font-weight:700;color:var(--accent)">' + r.montant.toLocaleString('fr-FR') + ' F</td>'
+                + '<td>' + badge + '</td>'
+                + '<td>' + codeCell + '</td>'
+                + '<td>' + actions + '</td>'
+                + '</tr>';
+        }).join('');
+    }
+
+    /* ================================================================
+       RENDU GRILLE CODES
+    ================================================================ */
+    function renderCodes(codes) {
+        var grid = document.getElementById('codesGrid');
+        grid.innerHTML = codes.map(function (c) {
+            var cls  = c.is_used ? 'code-tile used' : 'code-tile';
+            var stat = c.is_used ? '<div class="code-status used">Utilisé</div>' : '<div class="code-status free">Libre</div>';
+            var resa = c.reservation_id ? '<div class="code-resa">Résa: ' + (c.reservation_id || '') + '</div>' : '';
+            return '<div class="' + cls + '"><div class="code-str">' + c.code + '</div>' + stat + resa + '</div>';
+        }).join('');
+    }
+
+    /* ================================================================
+       FILTRES & RECHERCHE
+    ================================================================ */
+    function filterReservations(statut, btn) {
+        currentFilter = statut;
+        document.querySelectorAll('.filters .filter-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        applyFilter();
+    }
+
+    function applyFilter() {
+        var search = document.getElementById('searchInput').value.toLowerCase();
+        var filtered = allReservations.filter(function (r) {
+            var matchStatut = currentFilter === 'tous' || r.statut === currentFilter;
+            var matchSearch = !search
+                || r.nom.toLowerCase().includes(search)
+                || r.prenoms.toLowerCase().includes(search)
+                || r.code_reservation.toLowerCase().includes(search)
+                || r.telephone.includes(search);
+            return matchStatut && matchSearch;
+        });
+        renderReservations(filtered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', applyFilter);
+
+    function filterCodes(type, btn) {
+        document.querySelectorAll('#tabCodes .filter-btn').forEach(function (b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var filtered = allCodes.filter(function (c) {
+            if (type === 'libre')   return !c.is_used;
+            if (type === 'utilise') return c.is_used;
+            return true;
+        });
+        renderCodes(filtered);
+    }
+
+    function switchTab(tab) {
+        document.getElementById('tabReservations').style.display = tab === 'reservations' ? 'block' : 'none';
+        document.getElementById('tabCodes').style.display        = tab === 'codes'        ? 'block' : 'none';
+        document.getElementById('tabResaBtn').classList.toggle('active', tab === 'reservations');
+        document.getElementById('tabCodesBtn').classList.toggle('active', tab === 'codes');
+    }
+
+    /* ================================================================
+       MODAL : CONFIRMER PAIEMENT + ATTRIBUER CODE
+    ================================================================ */
+    function openConfirmModal(resaId, resaCode, clientName) {
+        currentResaId   = resaId;
+        currentResaCode = resaCode;
+        document.getElementById('modalSubtitle').textContent = 'Client : ' + clientName + ' — Code : ' + resaCode;
+
+        /* Peupler la liste des codes libres */
+        var freeCodesOptions = allCodes
+            .filter(function (c) { return !c.is_used; })
+            .map(function (c) { return '<option value="' + c.code + '">' + c.code + '</option>'; })
+            .join('');
+
+        document.getElementById('codeSelect').innerHTML =
+            '<option value="">— Sélectionnez un code libre —</option>' + freeCodesOptions;
+
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+        currentResaId   = null;
+        currentResaCode = null;
+    }
+
+    document.getElementById('modalConfirmBtn').addEventListener('click', async function () {
+        var selectedCode = document.getElementById('codeSelect').value;
+        if (!selectedCode) {
+            alert('Veuillez sélectionner un code de confirmation.');
+            return;
+        }
+
+        showLoader();
+        closeModal();
+
+        try {
+            /* 1. Mettre à jour la réservation : statut = paye + code attribué */
+            const { error: e1 } = await sbClient
+                .from('reservations')
+                .update({ statut: 'paye', confirmation_code: selectedCode })
+                .eq('id', currentResaId);
+
+            if (e1) throw e1;
+
+            /* 2. Marquer le code comme utilisé + lier à la réservation */
+            const { error: e2 } = await sbClient
+                .from('confirmation_codes')
+                .update({ is_used: false, reservation_id: currentResaId, assigned_at: new Date().toISOString() })
+                /* NOTE : is_used reste false jusqu'à ce que le client l'utilise réellement */
+                .eq('code', selectedCode);
+
+            if (e2) throw e2;
+
+            showToast('Paiement confirmé ! Code ' + selectedCode + ' attribué.');
+            await loadData();
+
+        } catch (err) {
+            showToast('Erreur : ' + err.message, true);
+            hideLoader();
+        }
+    });
+
+    /* ================================================================
+       ANNULER UNE RÉSERVATION
+    ================================================================ */
+    async function cancelReservation(resaId) {
+        if (!confirm('Annuler cette réservation ?')) return;
+        showLoader();
+
+        const { error } = await sbClient
+            .from('reservations')
+            .update({ statut: 'annule' })
+            .eq('id', resaId);
+
+        if (error) { showToast('Erreur : ' + error.message, true); }
+        else { showToast('Réservation annulée.'); }
+
+        await loadData();
+    }
+
+    /* ================================================================
+       HELPERS
+    ================================================================ */
+    function formatDate(d) {
+        if (!d) return '—';
+        var parts = d.split('-');
+        return parts[2] + '/' + parts[1] + '/' + parts[0];
+    }
+
+    function showToast(msg, isError) {
+        var el = document.getElementById('toast');
+        el.className = 'toast show' + (isError ? ' error' : '');
+        el.innerHTML = '<i class="fas ' + (isError ? 'fa-circle-xmark' : 'fa-circle-check') + '"></i><span>' + msg + '</span>';
+        setTimeout(function () { el.className = 'toast'; }, 4000);
+    }
+
+    function showLoader() { document.getElementById('loadingOverlay').classList.add('show'); }
+    function hideLoader() { document.getElementById('loadingOverlay').classList.remove('show'); }
+
+    /* Fermer la modal au clic sur l'overlay */
+    document.getElementById('modalOverlay').addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+    });
+</script>
+
+</body>
+</html>
